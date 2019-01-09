@@ -1,0 +1,23 @@
+[Unit]
+Description=Setup Ambari
+Before=ambari-server.service
+After=network-online.target
+
+[Service]
+EnvironmentFile=/etc/ambari-server/conf/systemd/env.conf
+Type=oneshot
+ExecStart=/bin/bash -c '/usr/sbin/ambari-server setup \
+              --database mysql \
+              --databasehost=${AMBARI_SERVER_DB_HOST} \
+              --databaseport=${AMBARI_SERVER_DB_PORT} \
+              --databasename=${AMBARI_SERVER_DB_NAME} \
+              --databaseusername=${AMBARI_SERVER_DB_USER} \
+              --databasepassword=${AMBARI_SERVER_DB_PASS} \
+              -j /usr/lib/jvm/jre-openjdk \
+              -s'
+StandardOutput=journal
+ExecStop=/bin/bash -c '/usr/sbin/ambari-server --version'
+RemainAfterExit=True
+
+[Install]
+WantedBy=multi-user.target

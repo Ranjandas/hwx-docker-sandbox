@@ -1,0 +1,15 @@
+[Unit]
+Description=Ambari Agent Setup
+After=network-online.target
+Before=ambari-agent.service
+
+[Service]
+EnvironmentFile=/etc/ambari-agent/conf/systemd/env.conf
+Type=oneshot
+ExecStart=/bin/bash -c 'sed -i s/^hostname=localhost/hostname=${AMBARI_SERVER_HOST}/g /etc/ambari-agent/conf/ambari-agent.ini'
+StandardOutput=journal
+ExecStop=/bin/bash -c '/usr/sbin/ambari-agent --version'
+RemainAfterExit=True
+
+[Install]
+WantedBy=multi-user.target

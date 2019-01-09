@@ -1,0 +1,19 @@
+[Unit]
+Description=Ambari DB Migrate
+Before=ambari-server.service
+After=ambari-setup.service
+
+[Service]
+EnvironmentFile=/etc/ambari-server/conf/systemd/env.conf
+Type=oneshot
+ExecStart=/bin/bash -c 'mysql -u ${AMBARI_SERVER_DB_USER} \
+                        -p${AMBARI_SERVER_DB_PASS} \
+                        -h ${AMBARI_SERVER_DB_HOST} \
+                        ambari \
+                        < /var/lib/ambari-server/resources/Ambari-DDL-MySQL-CREATE.sql'
+StandardOutput=journal
+ExecStop=/bin/bash -c '/usr/sbin/ambari-server --version'
+RemainAfterExit=True
+
+[Install]
+WantedBy=multi-user.target
