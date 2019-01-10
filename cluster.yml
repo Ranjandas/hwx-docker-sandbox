@@ -1,0 +1,99 @@
+---
+
+- name: Create HWX Cluster
+  hosts: localhost
+  connection: local
+  vars:
+    container_cluster_network_name: "example.com"
+    container_cluster_docker_image: "docker.io/centos/systemd"
+
+  tasks:
+    - name: Create Docker Network
+      docker_network:
+        name: "{{ container_cluster_network_name }}"
+
+    - name: Create DB Container
+      docker_container:
+        name: db
+        image: mysql:5.7
+        hostname: db.{{ container_cluster_network_name }}
+        network_mode: bridge
+        networks:
+          - name: "{{ container_cluster_network_name }}"
+        purge_networks: True
+        env:
+          MYSQL_ROOT_PASSWORD: redhat
+          MYSQL_DATABASE: ambari
+          MYSQL_USER: ambari
+          MYSQL_PASSWORD: ambari
+
+    - name: Create Ambari Server Container
+      docker_container:
+        name: ambari
+        image: ambari-server:2.7.10
+        hostname: ambari.{{ container_cluster_network_name }}
+        privileged: true
+        published_ports:
+          - 8080
+        network_mode: bridge
+        networks:
+          - name: "{{ container_cluster_network_name }}"
+        purge_networks: True
+        volumes:
+          - ./docker/ambari-server/vols/systemd-env.conf:/etc/ambari-server/conf/systemd/env.conf
+
+    - name: Create Master Container
+      docker_container:
+        name: msr-{{ item }}
+        image: ambari-agent:2.7.10
+        hostname: msr-{{ item }}.{{ container_cluster_network_name }}
+        network_mode: bridge
+        privileged: true
+        networks:
+          - name: "{{ container_cluster_network_name }}"
+        purge_networks: true
+        volumes:
+          - ./docker/ambari-agent/vols/systemd-env.conf:/etc/ambari-agent/conf/systemd/env.conf
+      with_sequence: count=3
+
+    - name: Create Data Container
+      docker_container:
+        name: dat-{{ item }}
+        image: ambari-agent:2.7.10
+        hostname: dat-{{ item }}.{{ container_cluster_network_name }}
+        network_mode: bridge
+        privileged: true
+        networks:
+          - name: "{{ container_cluster_network_name }}"
+        purge_networks: true
+        volumes:
+          - ./docker/ambari-agent/vols/systemd-env.conf:/etc/ambari-agent/conf/systemd/env.conf
+      with_sequence: count=3
+
+    - name: Create Kafka Container
+      docker_container:
+        name: kaf-{{ item }}
+        image: ambari-agent:2.7.10
+        hostname: kaf-{{ item }}.{{ container_cluster_network_name }}
+        network_mode: bridge
+        privileged: true
+        networks:
+          - name: "{{ container_cluster_network_name }}"
+        purge_networks: true
+        volumes:
+          - ./docker/ambari-agent/vols/systemd-env.conf:/etc/ambari-agent/conf/systemd/env.conf
+      with_sequence: count=2
+
+    - name: Create Storm Container
+      docker_container:
+        name: stm-{{ item }}
+        image: ambari-agent:2.7.10
+        hostname: stm-{{ item }}.{{ container_cluster_network_name }}
+        network_mode: bridge
+        privileged: true
+        networks:
+          - name: "{{ container_cluster_network_name }}"
+        purge_networks: true
+        volumes:
+          - ./docker/ambari-agent/vols/systemd-env.conf:/etc/ambari-agent/conf/systemd/env.conf
+      with_sequence: count=2
