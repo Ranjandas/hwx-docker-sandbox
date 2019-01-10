@@ -18,3 +18,5 @@ COPY etc/systemd/system/ambari-setup.service /etc/systemd/system/ambari-setup.se
 COPY etc/systemd/system/ambari-db-migrate.service /etc/systemd/system/ambari-db-migrate.service
 
 RUN systemctl enable ambari-server ambari-setup ambari-db-migrate
+
+EXPOSE 8080
